@@ -25,5 +25,3 @@ ____ http://your-site-path/modxpackageprovider/ ____
 
 After that you can choose on Packages tab, 
 Download Extras -> Select a provider -> Your repo name
-
-All 
