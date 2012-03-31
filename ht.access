@@ -1,0 +1,23 @@
+RewriteEngine On
+RewriteBase /modx
+
+# On creation of provider
+RewriteRule ^verify$ index.php?path=verify [QSA]
+
+# On display of packages
+RewriteRule ^home$ index.php?path=welcome [QSA]
+
+# On updated package access
+RewriteRule ^package/update$ index.php?path=update&signature=$1 [QSA,L]
+
+# On package access
+RewriteRule ^package$ index.php?path=package [QSA]
+RewriteRule ^package/(.*)$ index.php?path=package&signature=$1 [QSA]
+
+# On repository tree
+RewriteRule ^repository$ index.php?path=repository [QSA]
+RewriteRule ^repository/(.*)$ index.php?path=repository&repo=$1 [QSA]
+
+# On dynamic ZIP building
+RewriteRule ^download$ index.php?path=download [QSA]
+RewriteRule ^download/(.*)$ index.php?path=download&signature=$1 [QSA]
