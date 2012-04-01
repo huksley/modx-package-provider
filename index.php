@@ -106,8 +106,8 @@ $packages[] = array(
 	"repo" => "Main",	
 	"name" => "Test",
 	"dir" => "testpackage",
-	"version" => "0.0.18-unknown",
-	"changelog" => "- Added reading snippets, chunks and templates into vehicle\n- Added body to test snippet",
+	"version" => "0.0.23-unknown",
+	"changelog" => "- Added resource handling\n- Added reading snippets, chunks and templates into vehicle\n- Added body to test snippet",
 	// "url" => "$url/testpackage.php", // FULL URL for ZIP OR
 	// "dir" => "testpackage", // DIR for ZIP
 	// "version" => "1.1.1-unknown",
@@ -297,6 +297,7 @@ if ($path == "download") {
 					$templateFiles = array();
 					$chunkFiles = array();
 					$snippetFiles = array();
+					$resourceFiles = array();
 					foreach($files as $file) {
 						$fname = $file;
 						$fname = substr($file, strpos($file, $p["dir"]) + strlen($p["dir"]) + 1);
@@ -306,7 +307,7 @@ if ($path == "download") {
 						if ($fname == "setup-options.php") {
 							$haveSetupOptions = true;
 						}
-						$bname = (strpos("/", $fname) == FALSE) ? $fname : substr($fname, strrpos("/", $fname) + 1);
+						$bname = basename($fname);
 						if (strstr($bname, ".chunk.html") == ".chunk.html") {
 							$chunkFiles[] = $file;
 							if ($debug) {
@@ -324,15 +325,29 @@ if ($path == "download") {
 							if ($debug) {
 								echo "<template realfile='$file'/>";
 							}
-						} else {
+						} else
+						if ($bname == $fname && 
+							(
+							strstr($bname, ".txt") ||
+							strstr($bname, ".php") ||
+							strstr($bname, ".html") ||
+							strstr($bname, ".txt")
+							)) {
 							$fname = "$sig/$fname";
 							$zip->addFile($file, $fname);
 							if ($debug) {
 								echo "<file realfile='$file'>$fname</file>";
 							}
+						} else { // Files in folders and not special ones are resources
+							$resourceFiles[] = $file;
+							if ($debug) {
+								echo "<resource realfile='$file'/>";
+							}
 						}
 					}
 					
+					$resourceName = ifnull($p["resource"], strtolower($p["name"]));
+					$resourcePath = count($templateFiles) ? "templates" : "components";
 					$setupOptions = "";
 					$manifest = "";
 					$readme = ""; // README.txt
@@ -363,7 +378,7 @@ if ($path == "download") {
 						
 						$s .= "'manifest-vehicles' => array(\n";
 						
-						// Generic modCategory vehicle
+						// modCategory vehicle
 						$s .= "0 => array(\n";
 						$s .= "'vehicle_package' => 'transport',\n";
 						$s .= "'vehicle_class' => 'xPDOObjectVehicle',\n";
@@ -465,11 +480,68 @@ if ($path == "download") {
 						$v .= "'class' => 'modCategory',\n";
 						$v .= "'signature' => 'deadbeefh00000000000000000000000',\n";
 						$v .= "'native_key' => 1,\n";
+						
+						// Add resource files
+						if (count($resourceFiles)) {
+							$v .= "'resolve' => array(\n";
+							$v .= "0 => array(\n";
+							$v .= "'type' => 'file',\n";
+							$v .= "'body' => '{\"source\":\"$sig/modCategory/deadbeefz00000000000000000000000/0/\",\"target\":\"return \\\"\\\".MODX_ASSETS_PATH.\\\"/$resourcePath/\\\";\",\"name\":\"$resourceName\"}',\n";
+							$v .= "),\n";
+							$v .= "),\n";
+							
+							for ($i = 0; $i < count($resourceFiles); $i++) {
+								$file = $resourceFiles[$i];
+								$fname = substr($file, strpos($file, $p["dir"]) + strlen($p["dir"]) + 1);
+								$zip->addFile($file, "$sig/modCategory/deadbeefz00000000000000000000000/0/$resourceName/$fname");
+								if ($debug) {
+									echo "<file realfile='$file'>$sig/modCategory/deadbeefz00000000000000000000000/0/$resourceName/$fname</file>";
+								}
+							}
+						}
+						
 						$v .= "'object' => '{\"id\":1,\"parent\":0,\"category\":\"" . ifnull($p["category"], ifnull($p["namespace"], $p["name"])) . "\"}',\n";
 						$v .= '); ?' . '>';
 						$zip->addFromString("$sig/modCategory/deadbeeff00000000000000000000000.vehicle", $v);
 						if ($debug) {
 							echo "<vehicle-file><![CDATA[$v]]></vehicle-file>";
+						}
+						
+						if (count($resourceFiles)) {
+							// modNamespace vehicle
+							$s .= "1 => array(\n";
+							$s .= "'vehicle_package' => 'transport',\n";
+							$s .= "'vehicle_class' => 'xPDOObjectVehicle',\n";
+							$s .= "'class' => 'modNamespace',\n";
+							$s .= "'guid' => 'deadbeeff00000000000000000000002',\n";
+							$s .= "'native_key' => 1,\n";
+							$s .= "'filename' => 'modNamespace/deadbeeff00000000000000000000001.vehicle',\n";
+							$s .= "'namespace' => '" . ifnull($p["namespace"], $p["name"]) . "',\n";
+							$s .= "),\n";
+							
+							// Vehicle body
+							$v = '<' . '?php return array(' . "\n";
+							$v .= "'unique_key' => 'name',\n";
+							$v .= "'preserve_keys' => true,\n";
+							$v .= "'update_object' => true,\n";
+							$v .= "'resolve_files' => true,\n";
+							$v .= "'resolve_php' => true,\n";
+							$v .= "'namespace' => '" . ifnull($p["namespace"], $p["name"]) . "',\n";
+							$v .= "'resolve' => NULL,\n";
+							$v .= "'validate' => NULL,\n";
+							$v .= "'vehicle_package' => 'transport',\n";
+							$v .= "'vehicle_class' => 'xPDOObjectVehicle',\n";
+							$v .= "'guid' => 'deadbeefs00000000000000000000000',\n";
+							$v .= "'package' => 'modx',\n";
+							$v .= "'class' => 'modNamespace',\n";
+							$v .= "'signature' => 'deadbeeft00000000000000000000000',\n";
+							$v .= "'native_key' => '$resourceName',\n";
+							$v .= "'object' => '{\"name\":\"$resourceName\",\"path\":\"{assets_path}$resourcePath/$resourceName/\"}',\n";
+							$v .= '); ?' . '>';
+							$zip->addFromString("$sig/modNamespace/deadbeeff00000000000000000000001.vehicle", $v);
+							if ($debug) {
+								echo "<vehicle-file><![CDATA[$v]]></vehicle-file>";
+							}
 						}
 						
 						$s .= "),\n";
