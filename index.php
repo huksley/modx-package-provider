@@ -106,8 +106,8 @@ $packages[] = array(
 	"repo" => "Main",	
 	"name" => "Test",
 	"dir" => "testpackage",
-	"version" => "0.0.13-unknown",
-	"changelog" => "- Added body to test snippet",
+	"version" => "0.0.18-unknown",
+	"changelog" => "- Added reading snippets, chunks and templates into vehicle\n- Added body to test snippet",
 	// "url" => "$url/testpackage.php", // FULL URL for ZIP OR
 	// "dir" => "testpackage", // DIR for ZIP
 	// "version" => "1.1.1-unknown",
@@ -123,6 +123,8 @@ $packages[] = array(
 	// "license" => "GPLv2",	
 	// "modx_version" => "2.0",	
 	// "modx_db" => "mysql",	
+	// "namespace" => Namespace for objects
+	// "category" => Category for objects
 );
 
 for ($i = 0; $i < count($packages); $i++) {
@@ -289,9 +291,12 @@ if ($path == "download") {
 					$zip = new ZipArchive();
 					if ($zip->open($z, ZIPARCHIVE::OVERWRITE) !== true) {
 						die("Can`t open for writing $z!");
-					}					
+					}
 					$haveManifest = false;
 					$haveSetupOptions = false;
+					$templateFiles = array();
+					$chunkFiles = array();
+					$snippetFiles = array();
 					foreach($files as $file) {
 						$fname = $file;
 						$fname = substr($file, strpos($file, $p["dir"]) + strlen($p["dir"]) + 1);
@@ -301,10 +306,30 @@ if ($path == "download") {
 						if ($fname == "setup-options.php") {
 							$haveSetupOptions = true;
 						}
-						$fname = "$sig/$fname";
-						$zip->addFile($file, $fname);
-						if ($debug) {
-							echo "<file realfile='$file'>$fname</file>";
+						$bname = (strpos("/", $fname) == FALSE) ? $fname : substr($fname, strrpos("/", $fname) + 1);
+						if (strstr($bname, ".chunk.html") == ".chunk.html") {
+							$chunkFiles[] = $file;
+							if ($debug) {
+								echo "<chunk realfile='$file'/>";
+							}
+						} else
+						if (strstr($bname, ".snippet.php") == ".snippet.php") {
+							$snippetFiles[] = $file;
+							if ($debug) {
+								echo "<snippet realfile='$file'/>";
+							}
+						} else
+						if (strstr($bname, ".template.html") == ".template.html") {
+							$templateFiles[] = $file;
+							if ($debug) {
+								echo "<template realfile='$file'/>";
+							}
+						} else {
+							$fname = "$sig/$fname";
+							$zip->addFile($file, $fname);
+							if ($debug) {
+								echo "<file realfile='$file'>$fname</file>";
+							}
 						}
 					}
 					
@@ -316,7 +341,8 @@ if ($path == "download") {
 					}
 					$license = ""; // LICENSE.txt
 					if (file_exists($p["dir"] . "/LICENSE.txt")) {
-						$license = join("", file($p["dir"] . "/LICENSE.txt"));
+						// Strip PRINT NEW PAGE symbol in license file
+						$license = str_replace(chr(0x0c), "", join("", file($p["dir"] . "/LICENSE.txt")));
 					}
 					$changelog = ""; // CHANGELOG.txt
 					if (file_exists($p["dir"] . "/CHANGELOG.txt")) {
@@ -354,19 +380,82 @@ if ($path == "download") {
 						$v .= "'preserve_keys' => false,\n";
 						$v .= "'update_object' => true,\n";
 						
-						$v .= "'related_objects' => array(\n";
+						$v .= "'related_objects' => array(\n";							
+							// All snippets found
 							$v .= "'Snippets' => array(\n";
-								$v .= "'deadbeefi00000000000000000000000' => array(\n";
+							for ($i = 0; $i < count($snippetFiles); $i++) {
+								$sf = $snippetFiles[$i];
+								$sv = join("", file($sf));
+								$sv = str_replace("\n", "\\n", $sv);
+								$sv = str_replace("\t", "\\t", $sv);
+								$sv = str_replace("\r", "", $sv);
+								$sv = str_replace("\"", "\\\"", $sv);
+								$sv = str_replace("\\", "\\\\", $sv);
+								$sv = str_replace("'", "\\'", $sv);
+								$sn = basename($sf, ".snippet.php");
+								$v .= "'deadbeefi0000000000000000000000$i' => array(\n";
 									$v .= "'unique_key' => 'name',\n";
 									$v .= "'preserve_keys' => false,\n";
 									$v .= "'update_object' => true,\n";									
 									$v .= "'class' => 'modSnippet',\n";
-									$v .= "'object' => '{\"id\":0,\"name\":\"TestSnippet\",\"description\":\"\",\"editor_type\":0,\"category\":0,\"cache_type\":0,\"snippet\":\"echo time();\"}',\n";
-									$v .= "'guid' => 'deadbeefk00000000000000000000000',\n";
+									$v .= "'object' => '{\"id\":0,\"name\":\"$sn\",\"description\":\"\",\"editor_type\":0,\"category\":0,\"cache_type\":0,\"snippet\":\"". $sv . "\"}',\n";
+									$v .= "'guid' => 'deadbeefk0000000000000000000000$i',\n";
 									$v .= "'native_key' => 1,\n";
-									$v .= "'signature' => 'deadbeefl00000000000000000000000',\n";
+									$v .= "'signature' => 'deadbeefl0000000000000000000000$i',\n";
 								$v .= "),\n";
+							}
 							$v .= "),\n";
+							
+							// All chunks found
+							$v .= "'Chunks' => array(\n";
+							for ($i = 0; $i < count($chunkFiles); $i++) {
+								$sf = $chunkFiles[$i];
+								$sv = join("", file($sf));
+								$sv = str_replace("\n", "\\n", $sv);
+								$sv = str_replace("\t", "\\t", $sv);
+								$sv = str_replace("\r", "", $sv);
+								$sv = str_replace("\"", "\\\"", $sv);
+								$sv = str_replace("\\", "\\\\", $sv);
+								$sv = str_replace("'", "\\'", $sv);
+								$sn = basename($sf, ".chunk.html");
+								$v .= "'deadbeefm0000000000000000000000$i' => array(\n";
+									$v .= "'unique_key' => 'name',\n";
+									$v .= "'preserve_keys' => false,\n";
+									$v .= "'update_object' => true,\n";									
+									$v .= "'class' => 'modChunk',\n";
+									$v .= "'object' => '{\"id\":0,\"name\":\"$sn\",\"description\":\"\",\"editor_type\":0,\"category\":0,\"cache_type\":0,\"snippet\":\"". $sv . "\"}',\n";
+									$v .= "'guid' => 'deadbeefn0000000000000000000000$i',\n";
+									$v .= "'native_key' => 1,\n";
+									$v .= "'signature' => 'deadbeefo0000000000000000000000$i',\n";
+								$v .= "),\n";
+							}
+							$v .= "),\n";
+							
+							// All templates found
+							$v .= "'Templates' => array(\n";
+							for ($i = 0; $i < count($chunkFiles); $i++) {
+								$sf = $templateFiles[$i];
+								$sv = join("", file($sf));
+								$sv = str_replace("\n", "\\n", $sv);
+								$sv = str_replace("\t", "\\t", $sv);
+								$sv = str_replace("\r", "", $sv);
+								$sv = str_replace("\"", "\\\"", $sv);
+								$sv = str_replace("\\", "\\\\", $sv);
+								$sv = str_replace("'", "\\'", $sv);
+								$sn = basename($sf, ".template.html");
+								$v .= "'deadbeefp0000000000000000000000$i' => array(\n";
+									$v .= "'unique_key' => 'templatename',\n";
+									$v .= "'preserve_keys' => false,\n";
+									$v .= "'update_object' => true,\n";									
+									$v .= "'class' => 'modTemplate',\n";
+									$v .= "'object' => '{\"id\":0,\"templatename\":\"$sn\",\"description\":\"\",\"editor_type\":0,\"category\":0,\"template_type\":0,\"content\":\"".$sv . "\",\"locked\":0,\"properties\":\"a:0:{}\"}',\n";
+									$v .= "'guid' => 'deadbeefq0000000000000000000000$i',\n";
+									$v .= "'native_key' => 1,\n";
+									$v .= "'signature' => 'deadbeefr0000000000000000000000$i',\n";
+								$v .= "),\n";
+							}
+							$v .= "),\n";
+							
 						$v .= "),\n";
 						$v .= "'validate' => NULL,\n";
 						$v .= "'vehicle_package' => 'transport',\n";
@@ -376,9 +465,12 @@ if ($path == "download") {
 						$v .= "'class' => 'modCategory',\n";
 						$v .= "'signature' => 'deadbeefh00000000000000000000000',\n";
 						$v .= "'native_key' => 1,\n";
-						$v .= "'object' => '{\"id\":1,\"parent\":0,\"category\":\"" . ifnull($p["namespace"], $p["name"]) . "\"}',\n";
+						$v .= "'object' => '{\"id\":1,\"parent\":0,\"category\":\"" . ifnull($p["category"], ifnull($p["namespace"], $p["name"])) . "\"}',\n";
 						$v .= '); ?' . '>';
 						$zip->addFromString("$sig/modCategory/deadbeeff00000000000000000000000.vehicle", $v);
+						if ($debug) {
+							echo "<vehicle-file><![CDATA[$v]]></vehicle-file>";
+						}
 						
 						$s .= "),\n";
 						
