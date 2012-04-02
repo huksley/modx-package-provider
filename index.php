@@ -34,12 +34,12 @@ function read_all_files($root = '.'){
   return $files;
 }
 
-function write_package($p, $selected = false) {
+function write_package($i, $p, $selected = false) {
 	echo "<package>";
 	echo "<id>deadbeefa00000000000000$i</id>";
 	echo "<package>deadbeefb00000000000000$i</package>";
-	echo "<display_name>" . $p["name"] . "-" . $p["version"] . "</display_name>";
-	echo "<name>" . $p["name"] . "</name>";
+	echo "<name>" . ifnull($p["displayName"], $p["name"]) . " " . $p["version"] . "</name>";
+	echo "<display_name>" . $p["name"] . "</display_name>";
 	echo "<version>" . $p["version"] . "</version>";
 	echo "<version_major>" . $p["version_major"] . "</version_major>";
 	echo "<version_minor>" . $p["version_minor"] . "</version_minor>";
@@ -91,14 +91,15 @@ function write_package($p, $selected = false) {
 }
 
 $url = $_SERVER["SCRIPT_NAME"];
-$url = substr($url, 1, strrpos($url, "/") - 1);
+$url = substr($url, 1, max(0, strrpos($url, "/") - 1));
 $url = "http://" . $_SERVER["SERVER_NAME"] . "/" . $url;
 $path = $_REQUEST["path"];
 error_log($path);
 
 $repos = array();
 $repos[] = array(
-	"name" => "Main"
+	"name" => "Main",
+	"description" => "All packages"
 );
 
 $packages = array();
@@ -126,18 +127,40 @@ $packages[] = array(
 	// "namespace" => Namespace for objects
 	// "category" => Category for objects
 );
+$packages[] = array(
+	"repo" => "Main",	
+	"name" => "bootstraptemplate",
+	"displayName" => "Bootstrap Template", 
+	"dir" => "bootstrap",
+	"version" => "0.0.5-bootstrap2.0.2-1",
+	"changelog" => "- Initial release",
+	"author" => "Twitter Bootstrap Team",
+	"screenshot" => "http://twitter.github.com/bootstrap/assets/img/examples/bootstrap-example-fluid.jpg",
+	"description" => "Uses latest Twitter Bootstrap framework as MODx template base.",
+	"instruction" => "Install, use as template and modify template file to suit your needs.",
+	"approved" => "true",
+	"audited" => "true",
+	"featured" => "true",
+	"deprecated" => "false",	
+	"license" => "APACHEv2",	
+	"modx_version" => "2.0",	
+	"modx_db" => "mysql",
+	"resource" => "bootstrap",
+	"category" => "Bootstrap template"
+);
 
 for ($i = 0; $i < count($packages); $i++) {
-	$p = &$packages[$i];
+	$p = $packages[$i];
 	if (!$p["version"]) {
 		$p["version"] = "0.0.1-unknown";
 	}
-	$p["version_major"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9]+)/i", "\${1}", $p["version"]);
-	$p["version_minor"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9]+)/i", "\${2}", $p["version"]);
-	$p["version_patch"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9]+)/i", "\${3}", $p["version"]);
-	$p["version_release"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9]+)/i", "\${4}", $p["version"]);
+	$p["version_major"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${1}", $p["version"]);
+	$p["version_minor"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${2}", $p["version"]);
+	$p["version_patch"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${3}", $p["version"]);
+	$p["version_release"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${4}", $p["version"]);
 	$p["signature"] = strtolower($p["name"] . "-" . $p["version"]);
 	$p["location"] = ifnull($p["url"], "$url/download/" . $p["signature"] . ".zip");
+	$packages[$i] = $p;
 }
 
 if ($path == "verify") {
@@ -220,7 +243,7 @@ if ($path == "package") {
 	for ($i = 0; $i < count($packages); $i++) {
 		$p = $packages[$i];
 		if (!$sig || $sig == $p["signature"]) {
-			write_package($p, $sig == $p["signature"]);
+			write_package($i, $p, $sig == $p["signature"]);
 			$found = true;
 		}
 	}
@@ -235,18 +258,18 @@ if ($path == "update") {
 	header("Content-Type: text/xml");
 	$sig = $_REQUEST["signature"];
 	$op = array();
-	$op["name"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9]+)/i", "\${1}", $sig);
-	$op["version_major"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9]+)/i", "\${2}", $sig);
-	$op["version_minor"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9]+)/i", "\${3}", $sig);
-	$op["version_patch"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9]+)/i", "\${4}", $sig);
-	$op["version_release"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9]+)/i", "\${5}", $sig);	
+	$op["name"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${1}", $sig);
+	$op["version_major"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${2}", $sig);
+	$op["version_minor"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${3}", $sig);
+	$op["version_patch"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${4}", $sig);
+	$op["version_release"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${5}", $sig);	
 	$found = false;
 	for ($i = 0; $i < count($packages); $i++) {
 		$p = $packages[$i];
 		if (strtolower($p["name"]) == $op["name"] && $p["signature"] != $sig) {
 			$found = true;
 			echo "<packages of=\"1\" total=\"1\" page=\"1\">";
-			write_package($p, false);
+			write_package($i, $p, false);
 			echo "</packages>";
 			break;
 		}
@@ -448,7 +471,7 @@ if ($path == "download") {
 							
 							// All templates found
 							$v .= "'Templates' => array(\n";
-							for ($i = 0; $i < count($chunkFiles); $i++) {
+							for ($i = 0; $i < count($templateFiles); $i++) {
 								$sf = $templateFiles[$i];
 								$sv = join("", file($sf));
 								$sv = str_replace("\n", "\\n", $sv);
@@ -460,7 +483,7 @@ if ($path == "download") {
 								$sn = basename($sf, ".template.html");
 								$v .= "'deadbeefp0000000000000000000000$i' => array(\n";
 									$v .= "'unique_key' => 'templatename',\n";
-									$v .= "'preserve_keys' => false,\n";
+									$v .= "'preserve_keys' => true,\n";
 									$v .= "'update_object' => true,\n";									
 									$v .= "'class' => 'modTemplate',\n";
 									$v .= "'object' => '{\"id\":0,\"templatename\":\"$sn\",\"description\":\"\",\"editor_type\":0,\"category\":0,\"template_type\":0,\"content\":\"".$sv . "\",\"locked\":0,\"properties\":\"a:0:{}\"}',\n";
