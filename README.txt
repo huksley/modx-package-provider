@@ -2,7 +2,7 @@ Sample implementation of MODx Package Provider
 ----
 
 Currenly sample package is defined in body of index.php.
-This sample package will install single snippet TestSnippet in MODx resource tree.
+This sample package will install one snippet, one chunk and one template in MODx resource tree.
 
 The goal of this project is to create provider and packages which live on 
 real filesystem and can be installed/updated in MODx as needed.
