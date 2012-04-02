@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>[[++site_name]]</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="[[*description]]">
+	<meta name="keywords" content="[[*introtext]]" />
+    <meta name="author" content="[[++site_name]]">
+	<base href="[[++site_url]]" />                          	
+    <!-- Le styles -->
+
+    <link href="assets/templates/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+    </style>
+    <link href="assets/templates/bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="assets/templates/bootstrap/ico/favicon.ico">
+
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/templates/bootstrap/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/templates/bootstrap/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="assets/templates/bootstrap/ico/apple-touch-icon-57-precomposed.png">
+  </head>
+
+  <body>
+	<!-- Top bar with main navigation links -->
+	<div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#">[[++site_name]]</a>		  
+			<div class="nav-collapse">
+				<ul class="nav">
+					<li class="active"><a href="#">Home</a></li>
+					<li><a href="#about">About</a></li>
+					<li><a href="#contact">Contact</a></li>
+				</ul>
+			</div><!--/.nav-collapse -->		  
+			<p class="navbar-text pull-right">
+				Logged in as <a href="#">username</a>
+			</p>
+        </div>
+      </div>
+    </div>
+	
+	<div class="container-fluid">	
+		<div class="row-fluid">
+			<div class="page-header">
+				<h1>[[*pagetitle]]
+				<small>[[*introtext]]</small></h1>
+			</div>
+		</div>
+	</div>
+	
+    <div class="container-fluid">
+      <div class="row-fluid">
+	  
+        <div class="span9">
+		  <p>[[*content]]</p>
+        </div><!--/span-->
+		
+		<div class="span3">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list">
+              <li class="nav-header">Sidebar</li>
+              <li class="active"><a href="#">Link</a></li>
+              <li><a href="#">Link</a></li>
+              <li><a href="#">Link</a></li>
+              <li><a href="#">Link</a></li>
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->
+
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <p>&copy; [[++site_name]] 2012</p>
+        <p>
+        Valid: <a href="http://validator.w3.org/check/referer">XHTML</a> |
+        	<a href="http://jigsaw.w3.org/css-validator/check/referer">CSS</a>
+        </p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+    <!-- Le javascript
+    ================================================== -->
+
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="assets/templates/bootstrap/js/jquery.js"></script>
+    <script src="assets/templates/bootstrap/js/bootstrap-transition.js"></script>
+    <script src="assets/templates/bootstrap/js/bootstrap-alert.js"></script>
+    <script src="assets/templates/bootstrap/js/bootstrap-modal.js"></script>
+    <script src="assets/templates/bootstrap/js/bootstrap-dropdown.js"></script>
+
+    <script src="assets/templates/bootstrap/js/bootstrap-scrollspy.js"></script>
+    <script src="assets/templates/bootstrap/js/bootstrap-tab.js"></script>
+    <script src="assets/templates/bootstrap/js/bootstrap-tooltip.js"></script>
+    <script src="assets/templates/bootstrap/js/bootstrap-popover.js"></script>
+    <script src="assets/templates/bootstrap/js/bootstrap-button.js"></script>
+    <script src="assets/templates/bootstrap/js/bootstrap-collapse.js"></script>
+
+    <script src="assets/templates/bootstrap/js/bootstrap-carousel.js"></script>
+    <script src="assets/templates/bootstrap/js/bootstrap-typeahead.js"></script>
+
+  </body>
+</html>
