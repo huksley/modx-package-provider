@@ -38,7 +38,7 @@ function write_package($i, $p, $selected = false) {
 	echo "<package>";
 	echo "<id>deadbeefa00000000000000$i</id>";
 	echo "<package>deadbeefb00000000000000$i</package>";
-	echo "<name>" . ifnull($p["displayName"], $p["name"]) . " " . $p["version"] . "</name>";
+	echo "<name>" . ifnull($p["displayName"], $p["name"]) . "</name>";
 	echo "<display_name>" . $p["name"] . "</display_name>";
 	echo "<version>" . $p["version"] . "</version>";
 	echo "<version_major>" . $p["version_major"] . "</version_major>";
@@ -132,8 +132,8 @@ $packages[] = array(
 	"name" => "bootstraptemplate",
 	"displayName" => "Bootstrap Template", 
 	"dir" => "bootstrap",
-	"version" => "0.0.5-bootstrap2.0.2-1",
-	"changelog" => "- Initial release",
+	"version" => "0.0.12-unknown",
+	"changelog" => "- Split into chunks\n- Initial release",
 	"author" => "Twitter Bootstrap Team",
 	"screenshot" => "http://twitter.github.com/bootstrap/assets/img/examples/bootstrap-example-fluid.jpg",
 	"description" => "Uses latest Twitter Bootstrap framework as MODx template base.",
@@ -154,10 +154,10 @@ for ($i = 0; $i < count($packages); $i++) {
 	if (!$p["version"]) {
 		$p["version"] = "0.0.1-unknown";
 	}
-	$p["version_major"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${1}", $p["version"]);
-	$p["version_minor"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${2}", $p["version"]);
-	$p["version_patch"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${3}", $p["version"]);
-	$p["version_release"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${4}", $p["version"]);
+	$p["version_major"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)[-]?([a-zA-Z0-9\\.-]+)?/i", "\${1}", $p["version"]);
+	$p["version_minor"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)[-]?([a-zA-Z0-9\\.-]+)?/i", "\${2}", $p["version"]);
+	$p["version_patch"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)[-]?([a-zA-Z0-9\\.-]+)?/i", "\${3}", $p["version"]);
+	$p["version_release"] = preg_replace("/([0-9]+)\\.([0-9]+)\\.([0-9]+)[-]?([a-zA-Z0-9\\.-]+)?/i", "\${4}", $p["version"]);
 	$p["signature"] = strtolower($p["name"] . "-" . $p["version"]);
 	$p["location"] = ifnull($p["url"], "$url/download/" . $p["signature"] . ".zip");
 	$packages[$i] = $p;
@@ -236,7 +236,7 @@ if ($path == "repository") {
 if ($path == "package") {
 	header("Content-Type: text/xml");
 	$sig = $_REQUEST["signature"];
-	if (!$sig || $update) {
+	if (!$sig) {
 		echo "<packages of=\"" . count($packages) . "\" total=\"" . count($packages) . "\" page=\"1\">";
 	}
 	$found = false;
@@ -247,7 +247,7 @@ if ($path == "package") {
 			$found = true;
 		}
 	}
-	if (!$sig || $update) {
+	if (!$sig) {
 		echo "</packages>";
 	}
 	if ($sig && !$found) {
@@ -258,11 +258,15 @@ if ($path == "update") {
 	header("Content-Type: text/xml");
 	$sig = $_REQUEST["signature"];
 	$op = array();
-	$op["name"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${1}", $sig);
-	$op["version_major"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${2}", $sig);
-	$op["version_minor"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${3}", $sig);
-	$op["version_patch"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${4}", $sig);
-	$op["version_release"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)-([a-zA-Z0-9\\.-]+)/i", "\${5}", $sig);	
+	$op["name"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)[-]?([a-zA-Z0-9\\.-]+)?/i", "\${1}", $sig);
+	$op["version_major"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)[-]?([a-zA-Z0-9\\.-]+)?/i", "\${2}", $sig);
+	$op["version_minor"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)[-]?([a-zA-Z0-9\\.-]+)?/i", "\${3}", $sig);
+	$op["version_patch"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)[-]?([a-zA-Z0-9\\.-]+)?/i", "\${4}", $sig);
+	$relfound = 0;
+	$op["version_release"] = preg_replace("/([a-zA-Z0-9_]+)-([0-9]+)\\.([0-9]+)\\.([0-9]+)[-]?([a-zA-Z0-9\\.-]+)?/i", "\${5}", $sig, -1, &$relfound);
+	if (!$relfound) {
+		$op["version_release"] = "";
+	}
 	$found = false;
 	for ($i = 0; $i < count($packages); $i++) {
 		$p = $packages[$i];
@@ -631,6 +635,8 @@ Everything is setup for simple one tree multiple package handling.
 	<li><a href="home">home</a> (display repo welcome page)
 	<li><a href="repository">repository</a> (read repository tree and tags)
 	<li><a href="package">package</a> (read packages in repo or by tag)
+	<li><a href="package?signature=<?php echo $packages[1]["signature"] ?>">package?signature=</a> (specific package)
+	<li><a href="package/update?signature=<?php echo $packages[1]["signature"] ?>">package/update</a> (check updates)
 </ul>
 <?php
 }
